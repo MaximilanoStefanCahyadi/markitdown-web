@@ -1,4 +1,3 @@
 fastapi[standard]
 markitdown[all]
-jinja2
 python-multipart
