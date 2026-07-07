@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarkItDown — Convert Documents to Markdown</title>
+    <meta name="description" content="Convert PDF, DOCX, PPTX, XLSX, HTML, CSV and more to clean Markdown in seconds. Fast, secure, and accurate." />
+    <meta property="og:title" content="MarkItDown — Document to Markdown Converter" />
+    <meta property="og:description" content="Drag & drop any document and get clean Markdown instantly." />
+    <meta property="og:type" content="website" />
+
+    <!-- Google Fonts — Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <!-- ====== Background decoration ====== -->
+    <div class="bg-glow bg-glow--1" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow--2" aria-hidden="true"></div>
+
+    <main class="container">
+        <!-- ====== Hero ====== -->
+        <header class="hero" id="hero">
+            <div class="hero__icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+            </div>
+            <h1 class="hero__title">MarkItDown</h1>
+            <p class="hero__subtitle">Convert Office Documents<br/>to Markdown in Seconds</p>
+        </header>
+
+        <!-- ====== Upload card ====== -->
+        <section class="card" id="upload-card">
+            <form id="upload-form" enctype="multipart/form-data">
+                <!-- Drop zone -->
+                <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drag and drop a file or click to browse">
+                    <div class="dropzone__icon" id="dropzone-icon">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="dropzone__text">Drag &amp; Drop your file here</p>
+                    <p class="dropzone__hint">or click to browse</p>
+                    <input type="file" id="file-input" name="file" class="sr-only" />
+                </div>
+
+                <!-- File info (hidden until a file is selected) -->
+                <div class="file-info" id="file-info" hidden>
+                    <div class="file-info__icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                        </svg>
+                    </div>
+                    <div class="file-info__details">
+                        <span class="file-info__name" id="file-name"></span>
+                        <span class="file-info__size" id="file-size"></span>
+                    </div>
+                    <button type="button" class="file-info__remove" id="file-remove" aria-label="Remove file">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Supported formats -->
+                <div class="formats">
+                    <span class="formats__badge">PDF</span>
+                    <span class="formats__badge">DOCX</span>
+                    <span class="formats__badge">PPTX</span>
+                    <span class="formats__badge">XLSX</span>
+                    <span class="formats__badge">HTML</span>
+                    <span class="formats__badge">CSV</span>
+                    <span class="formats__badge">JSON</span>
+                    <span class="formats__badge">Images</span>
+                </div>
+
+                <!-- Convert button -->
+                <button type="submit" class="btn btn--primary" id="convert-btn" disabled>
+                    <span class="btn__text">Convert &amp; Download</span>
+                    <span class="btn__spinner" aria-hidden="true"></span>
+                </button>
+            </form>
+        </section>
+
+        <!-- ====== Features ====== -->
+        <section class="features" id="features">
+            <div class="feature">
+                <div class="feature__icon feature__icon--speed">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                </div>
+                <h3 class="feature__title">Lightning Fast</h3>
+                <p class="feature__desc">Convert documents in milliseconds, not minutes.</p>
+            </div>
+            <div class="feature">
+                <div class="feature__icon feature__icon--secure">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                </div>
+                <h3 class="feature__title">Secure</h3>
+                <p class="feature__desc">Files are processed locally and never stored.</p>
+            </div>
+            <div class="feature">
+                <div class="feature__icon feature__icon--accurate">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <h3 class="feature__title">Accurate</h3>
+                <p class="feature__desc">Preserves structure, tables, and formatting.</p>
+            </div>
+        </section>
+
+        <!-- ====== Footer ====== -->
+        <footer class="footer">
+            <p>Powered by <a href="https://github.com/microsoft/markitdown" target="_blank" rel="noopener">Microsoft MarkItDown</a></p>
+        </footer>
+    </main>
+
+    <!-- ====== Toast container ====== -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
