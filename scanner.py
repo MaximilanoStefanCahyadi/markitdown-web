@@ -126,9 +126,10 @@ def enhance(img: np.ndarray, mode: str) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
-# Stage 4 — EXPORT: wrap the image in a one-page PDF
+# Stage 4 — EXPORT: encode an enhanced image and add it as one PDF page
 # ---------------------------------------------------------------------------
-def image_to_pdf_bytes(img: np.ndarray, mode: str) -> bytes:
+def _insert_image_page(doc: "fitz.Document", img: np.ndarray, mode: str) -> None:
+    """Encode `img` and append it to `doc` as a new page."""
     h, w = img.shape[:2]
 
     # Pure black & white compresses far better as PNG; photographic
@@ -142,20 +143,25 @@ def image_to_pdf_bytes(img: np.ndarray, mode: str) -> bytes:
 
     # Page size in PDF points (1/72"), assuming the scan is ~200 DPI.
     page_w, page_h = w * 72 / 200, h * 72 / 200
+    page = doc.new_page(width=page_w, height=page_h)
+    page.insert_image(page.rect, stream=encoded.tobytes())
+
+
+def image_to_pdf_bytes(img: np.ndarray, mode: str) -> bytes:
+    """Wrap a single enhanced image in a one-page PDF."""
     doc = fitz.open()
     try:
-        page = doc.new_page(width=page_w, height=page_h)
-        page.insert_image(page.rect, stream=encoded.tobytes())
+        _insert_image_page(doc, img, mode)
         return doc.tobytes()
     finally:
         doc.close()
 
 
 # ---------------------------------------------------------------------------
-# The full pipeline
+# Per-image pipeline: photo bytes -> enhanced, flattened image
 # ---------------------------------------------------------------------------
-def scan_photo_to_pdf(photo_bytes: bytes, mode: str = "color") -> tuple[bytes, bool]:
-    """Run the whole pipeline. Returns (pdf_bytes, page_was_detected)."""
+def scan_photo_to_image(photo_bytes: bytes, mode: str = "color") -> tuple[np.ndarray, bool]:
+    """Decode -> detect -> warp -> cap -> enhance. Returns (image, detected)."""
     img = cv2.imdecode(np.frombuffer(photo_bytes, np.uint8), cv2.IMREAD_COLOR)
     if img is None:
         raise ValueError("could not decode the image — is it a valid photo?")
@@ -170,5 +176,38 @@ def scan_photo_to_pdf(photo_bytes: bytes, mode: str = "color") -> tuple[bytes, b
         f = OUTPUT_MAX_DIM / max(h, w)
         page = cv2.resize(page, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
 
-    page = enhance(page, mode)
-    return image_to_pdf_bytes(page, mode), detected
+    return enhance(page, mode), detected
+
+
+# ---------------------------------------------------------------------------
+# The full pipeline — one or many photos into a single PDF
+# ---------------------------------------------------------------------------
+def scan_photos_to_pdf(
+    photos: list[bytes], mode: str = "color"
+) -> tuple[bytes, int]:
+    """Scan each photo and combine them into one multi-page PDF.
+
+    Returns (pdf_bytes, detected_count) where detected_count is how many
+    pages had their edges auto-detected (the rest used the full photo).
+    Images are processed one at a time to keep peak memory low.
+    """
+    if not photos:
+        raise ValueError("no photos to scan")
+
+    doc = fitz.open()
+    try:
+        detected_count = 0
+        for photo_bytes in photos:
+            img, detected = scan_photo_to_image(photo_bytes, mode)
+            detected_count += int(detected)
+            _insert_image_page(doc, img, mode)
+            del img  # free before decoding the next page
+        return doc.tobytes(), detected_count
+    finally:
+        doc.close()
+
+
+def scan_photo_to_pdf(photo_bytes: bytes, mode: str = "color") -> tuple[bytes, bool]:
+    """Single-photo convenience wrapper. Returns (pdf_bytes, detected)."""
+    pdf_bytes, detected_count = scan_photos_to_pdf([photo_bytes], mode)
+    return pdf_bytes, detected_count > 0

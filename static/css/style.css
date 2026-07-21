@@ -856,6 +856,124 @@ a:hover {
     flex-wrap: wrap;
 }
 
+.scan-actions {
+    display: flex;
+    justify-content: center;
+}
+
+/* Live camera panel */
+.scan-camera[hidden] {
+    display: none;
+}
+
+.scan-camera {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.scan-camera__video {
+    width: 100%;
+    max-width: 100%;
+    background: #000;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.scan-camera__controls {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Captured / uploaded pages queue */
+.scan-queue[hidden] {
+    display: none;
+}
+
+.scan-queue {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    justify-content: center;
+}
+
+.scan-queue__item {
+    position: relative;
+    width: 96px;
+}
+
+.scan-queue__thumb {
+    width: 96px;
+    height: 128px;
+    object-fit: cover;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    background: var(--surface-sunken);
+}
+
+.scan-queue__num {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 100px;
+}
+
+.scan-queue__controls {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.scan-queue__btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color var(--duration) var(--ease),
+                border-color var(--duration) var(--ease),
+                background var(--duration) var(--ease);
+}
+
+.scan-queue__btn:hover:not(:disabled) {
+    background: var(--surface-sunken);
+    color: var(--text);
+}
+
+.scan-queue__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.scan-queue__del:hover:not(:disabled) {
+    color: var(--error);
+    border-color: var(--error);
+    background: var(--error-bg);
+}
+
 .scan-result {
     display: flex;
     flex-direction: column;
@@ -876,6 +994,12 @@ a:hover {
     border: 1px solid var(--border-input);
     border-radius: 4px;
     box-shadow: var(--shadow-sm);
+}
+
+.scan-preview__caption {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-muted);
 }
 
 /* ----- Responsive ---------------------------------------------------- */

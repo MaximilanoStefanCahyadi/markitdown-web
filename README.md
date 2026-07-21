@@ -7,7 +7,7 @@ A small FastAPI web app that puts four document tools on one tabbed page: conver
 - **Convert to Markdown** — upload a PDF, DOCX, PPTX, XLSX, HTML, CSV, JSON, image, and more; the server runs it through [Microsoft's MarkItDown](https://github.com/microsoft/markitdown) library and hands back a `.md` file download.
 - **PDF Editor** — add text boxes, whiteout rectangles, and a hand-drawn signature to any PDF. 100% client-side: your PDF never leaves your machine. Rendered with PDF.js, edited on an overlay, exported with pdf-lib.
 - **OCR Scanner** — upload a scanned PDF (up to 20 MB / 20 pages); the server renders each page to an image with PyMuPDF and extracts text with Tesseract, returning Markdown you can copy or download.
-- **Photo Scanner** — upload a photo of a document (straight from your phone, up to 15 MB); the server runs the classic OpenCV scanning pipeline — find the page corners, flatten the perspective, enhance in color, grayscale, or black & white — and returns a one-page PDF you preview in-browser before downloading.
+- **Photo Scanner** — add pages by uploading photos **or capturing them live from your camera** (like CamScanner), build a multi-page queue you can reorder and trim, then let the server run the classic OpenCV pipeline on each page — find the corners, flatten the perspective, enhance in color, grayscale, or black & white — and combine them into one multi-page PDF you preview in-browser before downloading.
 
 ## Architecture at a glance
 
@@ -15,32 +15,32 @@ Three of the four tools talk to the server. The PDF editor never does — that's
 
 ```mermaid
 flowchart LR
-    subgraph Browser
-        T[Tabbed UI<br/>tabs.js]
-        C[Convert tab<br/>app.js]
-        E[PDF Editor tab<br/>pdf-editor.js<br/>PDF.js + pdf-lib + signature_pad<br/><b>never calls the server</b>]
-        O[OCR tab<br/>ocr.js]
-        S[Photo Scanner tab<br/>scanner.js<br/>previews result with PDF.js]
+    subgraph BROWSER["Browser"]
+        T["Tabbed UI<br/>tabs.js"]
+        C["Convert tab<br/>app.js"]
+        E["PDF Editor tab<br/>pdf-editor.js<br/>PDF.js + pdf-lib + signature_pad<br/><b>never calls the server</b>"]
+        O["OCR tab<br/>ocr.js"]
+        S["Photo Scanner tab<br/>scanner.js<br/>camera capture + page queue<br/>previews result with PDF.js"]
     end
 
-    subgraph Docker container
-        subgraph FastAPI server — main.py
+    subgraph DOCKER["Docker container"]
+        subgraph API["FastAPI server (main.py)"]
             CV["POST /convert"]
             OC["POST /ocr"]
             SC["POST /scan"]
         end
-        MID[MarkItDown library]
-        PMP[PyMuPDF]
-        TESS[Tesseract binary<br/>installed via apt-get]
-        CVP[OpenCV pipeline<br/>scanner.py<br/>detect → warp → enhance]
+        MID["MarkItDown library"]
+        PMP["PyMuPDF"]
+        TESS["Tesseract binary<br/>installed via apt-get"]
+        CVP["OpenCV pipeline<br/>scanner.py<br/>detect / warp / enhance"]
     end
 
     C -- "multipart upload" --> CV
     CV --> MID
     O -- "multipart upload" --> OC
-    OC -- "page → PNG" --> PMP --> TESS
+    OC -- "page to PNG" --> PMP --> TESS
     S -- "photo + mode" --> SC
-    SC --> CVP -- "image → one-page PDF" --> PMP
+    SC --> CVP -- "images to multi-page PDF" --> PMP
     SC -- "PDF back to browser" --> S
 ```
 
@@ -152,9 +152,17 @@ Why it works: the top-left corner is small in *both* x and y, so it has the smal
 
 Adaptive is the key word. A *global* threshold ("everything darker than 128 is black") fails on real phone photos because lighting is never even — the shadowed half of the page turns solid black. An adaptive threshold decides black-or-white *per neighborhood*, comparing each pixel to its local surroundings, so a shadow that darkens both the paper and the ink in one region cancels itself out.
 
-**EXPORT — wrap it in a PDF.** Black & white output compresses far better as PNG (huge flat areas); photographic color/gray content is much smaller as JPEG at quality 85. PyMuPDF then creates a one-page PDF sized as if the scan were ~200 DPI (`w * 72 / 200` points), and the browser previews page 1 with the already-vendored PDF.js before you download.
+**EXPORT — wrap it in a PDF.** Black & white output compresses far better as PNG (huge flat areas); photographic color/gray content is much smaller as JPEG at quality 85. PyMuPDF then adds each enhanced page to one document sized as if the scan were ~200 DPI (`w * 72 / 200` points). When you queue several pages, `scan_photos_to_pdf` runs the whole detect→warp→enhance pipeline on each photo *one at a time* (so peak memory is just one page, not the whole batch) and appends them all with PyMuPDF's `new_page` in a loop. The browser previews page 1 with the already-vendored PDF.js before you download the full document.
 
 Bonus lesson: OpenCV normally drags in a pile of GUI system libraries — but `requirements.txt` uses `opencv-python-headless`, which skips all of them. That's why this whole feature needed **zero new `apt-get` lines** in the Dockerfile, unlike Tesseract.
+
+### 5. The live camera — and why it needs HTTPS
+
+The camera capture is pure browser: `scanner.js` calls `navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })` to open a live stream (preferring the rear camera on phones), shows it in a `<video>`, and when you hit **Capture** it draws the current video frame onto a `<canvas>` and grabs it as a JPEG blob. That blob joins the same page queue as uploaded files, so both paths funnel into one `POST /scan`. No captured frame touches the server until you press **Create PDF**.
+
+The one gotcha: browsers only expose the camera in a **secure context** — that means HTTPS *or* `http://localhost`. Render serves HTTPS, so the camera works on your deployed site, and it works during local development because `localhost` is trusted. But if you open the app over your LAN by plain IP (e.g. `http://192.168.1.5:8000` on your phone), the browser silently withholds `getUserMedia` — so `scanner.js` feature-detects `window.isSecureContext` and just hides the camera button, leaving upload as the fallback. To test the camera from a real phone against a local server, put it behind HTTPS (a tunnel like `ngrok`/`cloudflared`, or a self-signed cert).
+
+One more housekeeping detail: a live camera holds the device until you release it, so `scanner.js` stops every media track (`stream.getTracks().forEach(t => t.stop())`) when you close the panel, switch to another tab, or hide the page — otherwise the camera light would stay on.
 
 ## Run it locally
 
@@ -176,7 +184,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Open <http://127.0.0.1:8000>. The Convert, PDF Editor, and Photo Scanner tabs work immediately (OpenCV installs cleanly through pip).
+Open <http://127.0.0.1:8000>. The Convert, PDF Editor, and Photo Scanner tabs work immediately (OpenCV installs cleanly through pip), and the Photo Scanner's **live camera works too** because `localhost` counts as a secure context. (Reaching the same server from your phone over a plain-IP LAN address won't expose the camera — see the camera lesson above for why.)
 
 **The OCR tab needs the Tesseract binary installed on your machine** (pip can't do it — see the lesson above). On Windows, use the [UB Mannheim installer](https://github.com/UB-Mannheim/tesseract/wiki); on macOS `brew install tesseract`; on Debian/Ubuntu `sudo apt-get install tesseract-ocr`. Or skip the local install and test OCR through Docker instead.
 
@@ -230,7 +238,7 @@ markitdown/
     │   ├── app.js        # Convert tab: drag & drop, POST /convert, download, toasts
     │   ├── pdf-editor.js # PDF Editor: render, overlay edits, toPdfCoords(), export
     │   ├── ocr.js        # OCR tab: upload, POST /ocr, show/copy/download result
-    │   └── scanner.js    # Photo Scanner tab: mode picker, POST /scan, PDF.js preview
+    │   └── scanner.js    # Photo Scanner: camera capture, page queue, POST /scan, PDF.js preview
     └── vendor/           # Vendored libraries — no CDN at runtime
         ├── pdfjs/        # pdf.min.js + pdf.worker.min.js (rendering)
         ├── pdf-lib.min.js        # PDF export
@@ -244,7 +252,7 @@ markitdown/
 - **Text boxes can't be dragged after placement.** Signatures already can — the `makeMovable()` helper in `pdf-editor.js` exists; wiring it up to text edits is a nice first contribution.
 - **Whiteout hides text, it doesn't remove it.** True redaction means rewriting the PDF content streams — a much deeper feature.
 - **Raise the OCR limits** (`OCR_MAX_BYTES`, `OCR_MAX_PAGES`, `OCR_DPI` in `main.py`) if you deploy on a machine with more than 512 MB of RAM.
-- **The Photo Scanner does one photo → one page.** Accepting several photos and appending each as a page of the same PDF (PyMuPDF's `new_page` in a loop) would make it a real multi-page scanner.
+- **No real-time edge overlay.** Detection happens server-side after you capture, so there's no live green outline tracking the page as you aim. Doing that CamScanner-style would mean running OpenCV.js (a ~9 MB WebAssembly build) in the browser and processing every frame.
 - **No manual corner adjustment.** When detection misses, commercial apps let you drag the four corners yourself; the frontend could draw the detected quad on a canvas and make its corners draggable before submitting.
 - **No deskew fallback.** When no quad is found, the scanner enhances the photo as-is; estimating the dominant text angle (e.g. via `cv2.minAreaRect` on text contours) and rotating to level it would rescue slightly-crooked photos.
 

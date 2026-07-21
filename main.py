@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from markitdown import MarkItDown
 from PIL import Image
 
-from scanner import scan_photo_to_pdf
+from scanner import scan_photos_to_pdf
 
 app = FastAPI(
     title="MarkItDown Toolbox",
@@ -201,23 +201,29 @@ def ocr_pdf(file: UploadFile = File(...)):
 # Photo scanner — photo of a document -> flattened, enhanced, one-page PDF
 # (the OpenCV pipeline lives in scanner.py)
 # ---------------------------------------------------------------------------
-SCAN_MAX_BYTES = 15 * 1024 * 1024  # 15 MB — plenty for any phone photo
+SCAN_MAX_BYTES = 15 * 1024 * 1024  # 15 MB per photo — plenty for a phone photo
+SCAN_MAX_PAGES = 20                # cap the multi-page queue (memory + PDF size)
 SCAN_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif"}
 SCAN_MODES = {"color", "gray", "bw"}
 
 
 # Plain `def` again: OpenCV work is CPU-bound, so FastAPI threads it.
+# Accepts one OR many photos (uploaded files and/or live camera captures)
+# and combines them into a single multi-page PDF.
 @app.post("/scan")
-def scan_photo(file: UploadFile = File(...), mode: str = Form("color")):
-    """Accept a document photo, detect+flatten+enhance it, return a PDF."""
+def scan_photo(files: list[UploadFile] = File(...), mode: str = Form("color")):
+    """Accept document photos, detect+flatten+enhance each, return one PDF."""
 
-    original_name = file.filename or "photo.jpg"
-    ext = Path(original_name).suffix.lower()
-
-    if ext not in SCAN_EXTENSIONS:
+    if not files:
         return Response(
-            content=f"Unsupported photo type: {ext or 'unknown'} "
-                    f"(use {', '.join(sorted(SCAN_EXTENSIONS))})",
+            content="No photos received.",
+            status_code=400,
+            media_type="text/plain",
+        )
+
+    if len(files) > SCAN_MAX_PAGES:
+        return Response(
+            content=f"Too many pages: max {SCAN_MAX_PAGES} per PDF",
             status_code=400,
             media_type="text/plain",
         )
@@ -229,26 +235,37 @@ def scan_photo(file: UploadFile = File(...), mode: str = Form("color")):
             media_type="text/plain",
         )
 
-    contents = file.file.read()
-    if len(contents) > SCAN_MAX_BYTES:
-        return Response(
-            content=f"File too large: max {SCAN_MAX_BYTES // (1024 * 1024)} MB",
-            status_code=413,
-            media_type="text/plain",
-        )
+    contents = []
+    for f in files:
+        ext = Path(f.filename or "photo.jpg").suffix.lower()
+        if ext not in SCAN_EXTENSIONS:
+            return Response(
+                content=f"Unsupported photo type: {ext or 'unknown'} "
+                        f"(use {', '.join(sorted(SCAN_EXTENSIONS))})",
+                status_code=400,
+                media_type="text/plain",
+            )
+        data = f.file.read()
+        if len(data) > SCAN_MAX_BYTES:
+            return Response(
+                content=f"A photo is too large: max {SCAN_MAX_BYTES // (1024 * 1024)} MB each",
+                status_code=413,
+                media_type="text/plain",
+            )
+        contents.append(data)
 
     try:
-        pdf_bytes, detected = scan_photo_to_pdf(contents, mode)
+        pdf_bytes, detected_count = scan_photos_to_pdf(contents, mode)
 
-        stem = Path(original_name).stem
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{stem}.scanned.pdf"',
-                # Tells the frontend whether page edges were actually found
-                # or the whole photo was used as-is.
-                "X-Scan-Detected": "true" if detected else "false",
+                "Content-Disposition": 'attachment; filename="scan.pdf"',
+                # How many pages we built, and how many had edges auto-detected
+                # (the rest fell back to using the full photo).
+                "X-Scan-Pages": str(len(contents)),
+                "X-Scan-Detected": str(detected_count),
             },
         )
 
