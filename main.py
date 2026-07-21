@@ -5,11 +5,13 @@ from pathlib import Path
 
 import fitz  # PyMuPDF — renders PDF pages to images without system deps
 import pytesseract
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from markitdown import MarkItDown
 from PIL import Image
+
+from scanner import scan_photo_to_pdf
 
 app = FastAPI(
     title="MarkItDown Toolbox",
@@ -193,3 +195,66 @@ def ocr_pdf(file: UploadFile = File(...)):
                 os.unlink(tmp_path)
             except OSError:
                 pass
+
+
+# ---------------------------------------------------------------------------
+# Photo scanner — photo of a document -> flattened, enhanced, one-page PDF
+# (the OpenCV pipeline lives in scanner.py)
+# ---------------------------------------------------------------------------
+SCAN_MAX_BYTES = 15 * 1024 * 1024  # 15 MB — plenty for any phone photo
+SCAN_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif"}
+SCAN_MODES = {"color", "gray", "bw"}
+
+
+# Plain `def` again: OpenCV work is CPU-bound, so FastAPI threads it.
+@app.post("/scan")
+def scan_photo(file: UploadFile = File(...), mode: str = Form("color")):
+    """Accept a document photo, detect+flatten+enhance it, return a PDF."""
+
+    original_name = file.filename or "photo.jpg"
+    ext = Path(original_name).suffix.lower()
+
+    if ext not in SCAN_EXTENSIONS:
+        return Response(
+            content=f"Unsupported photo type: {ext or 'unknown'} "
+                    f"(use {', '.join(sorted(SCAN_EXTENSIONS))})",
+            status_code=400,
+            media_type="text/plain",
+        )
+
+    if mode not in SCAN_MODES:
+        return Response(
+            content=f"Unknown mode: {mode} (use color, gray, or bw)",
+            status_code=400,
+            media_type="text/plain",
+        )
+
+    contents = file.file.read()
+    if len(contents) > SCAN_MAX_BYTES:
+        return Response(
+            content=f"File too large: max {SCAN_MAX_BYTES // (1024 * 1024)} MB",
+            status_code=413,
+            media_type="text/plain",
+        )
+
+    try:
+        pdf_bytes, detected = scan_photo_to_pdf(contents, mode)
+
+        stem = Path(original_name).stem
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{stem}.scanned.pdf"',
+                # Tells the frontend whether page edges were actually found
+                # or the whole photo was used as-is.
+                "X-Scan-Detected": "true" if detected else "false",
+            },
+        )
+
+    except Exception as exc:
+        return Response(
+            content=f"Scan failed: {str(exc)}",
+            status_code=500,
+            media_type="text/plain",
+        )

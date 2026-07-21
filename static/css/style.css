@@ -835,6 +835,49 @@ a:hover {
     word-break: break-word;
 }
 
+/* ----- Photo scanner --------------------------------------------------------- */
+.mode-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.mode-group__label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.mode-group__options {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.scan-result {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.scan-result[hidden] {
+    display: none;
+}
+
+.scan-preview {
+    display: flex;
+    justify-content: center;
+}
+
+.scan-preview canvas {
+    max-width: 100%;
+    border: 1px solid var(--border-input);
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
 /* ----- Responsive ---------------------------------------------------- */
 @media (max-width: 640px) {
     .container {

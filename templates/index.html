@@ -40,6 +40,9 @@
             <button class="tab-btn" role="tab" aria-selected="false" data-tab="ocr" id="tabbtn-ocr">
                 OCR Scanner
             </button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-tab="scan" id="tabbtn-scan">
+                Photo Scanner
+            </button>
         </nav>
 
         <!-- ================================================================
@@ -259,6 +262,74 @@
             </section>
         </section>
 
+        <!-- ================================================================
+             TAB 4 — Photo Scanner (server-side OpenCV pipeline)
+             ================================================================ -->
+        <section class="tab-panel" id="tab-scan" role="tabpanel" aria-labelledby="tabbtn-scan" hidden>
+            <section class="card">
+                <form id="scan-form">
+                    <div class="dropzone" id="scan-dropzone" tabindex="0" role="button" aria-label="Drag and drop a document photo or click to browse">
+                        <div class="dropzone__icon">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </div>
+                        <p class="dropzone__text">Drop a photo of a document</p>
+                        <p class="dropzone__hint">edges are detected, the page is flattened and enhanced, and you get a PDF</p>
+                        <input type="file" id="scan-file-input" accept=".jpg,.jpeg,.png,.webp,.bmp,.tiff,.tif,image/*" class="sr-only" />
+                    </div>
+
+                    <div class="file-info" id="scan-file-info" hidden>
+                        <div class="file-info__icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                        </div>
+                        <div class="file-info__details">
+                            <span class="file-info__name" id="scan-file-name"></span>
+                            <span class="file-info__size" id="scan-file-size"></span>
+                        </div>
+                        <button type="button" class="file-info__remove" id="scan-file-remove" aria-label="Remove file">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="mode-group" role="group" aria-label="Enhancement mode">
+                        <span class="mode-group__label">Output style</span>
+                        <div class="mode-group__options">
+                            <button type="button" class="tool-btn tool-btn--active" data-scan-mode="color">Color</button>
+                            <button type="button" class="tool-btn" data-scan-mode="gray">Grayscale</button>
+                            <button type="button" class="tool-btn" data-scan-mode="bw">Black &amp; White</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary" id="scan-btn" disabled>
+                        <span class="btn__text">Scan &amp; Make PDF</span>
+                        <span class="btn__spinner" aria-hidden="true"></span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Scan result: PDF preview rendered with PDF.js -->
+            <section class="card scan-result" id="scan-result" hidden>
+                <div class="ocr-result__header">
+                    <h3 class="ocr-result__title">Scanned page</h3>
+                    <div class="ocr-result__actions">
+                        <button type="button" class="tool-btn" id="scan-download">Download PDF</button>
+                    </div>
+                </div>
+                <div class="scan-preview">
+                    <canvas id="scan-preview-canvas"></canvas>
+                </div>
+            </section>
+        </section>
+
         <!-- ====== Footer ====== -->
         <footer class="footer">
             <p>Powered by <a href="https://github.com/microsoft/markitdown" target="_blank" rel="noopener">Microsoft MarkItDown</a>,
@@ -294,5 +365,6 @@
     <script src="/static/js/app.js"></script>
     <script src="/static/js/pdf-editor.js"></script>
     <script src="/static/js/ocr.js"></script>
+    <script src="/static/js/scanner.js"></script>
 </body>
 </html>
