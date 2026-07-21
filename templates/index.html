@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MarkItDown — Convert Documents to Markdown</title>
-    <meta name="description" content="Convert PDF, DOCX, PPTX, XLSX, HTML, CSV and more to clean Markdown in seconds. Fast, secure, and accurate." />
-    <meta property="og:title" content="MarkItDown — Document to Markdown Converter" />
-    <meta property="og:description" content="Drag & drop any document and get clean Markdown instantly." />
+    <title>MarkItDown Toolbox — Convert, Edit &amp; OCR Documents</title>
+    <meta name="description" content="Convert documents to Markdown, edit and sign PDFs in the browser, and OCR scanned PDFs. Fast, secure, and accurate." />
+    <meta property="og:title" content="MarkItDown Toolbox — Convert, Edit &amp; OCR" />
+    <meta property="og:description" content="Convert to Markdown, edit &amp; sign PDFs, and extract text from scans." />
     <meta property="og:type" content="website" />
 
     <!-- Google Fonts — Inter -->
@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>" />
     <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
@@ -33,109 +34,274 @@
                     <polyline points="10 9 9 9 8 9"/>
                 </svg>
             </div>
-            <h1 class="hero__title">MarkItDown</h1>
-            <p class="hero__subtitle">Convert Office Documents<br/>to Markdown in Seconds</p>
+            <h1 class="hero__title">MarkItDown Toolbox</h1>
+            <p class="hero__subtitle">Convert Documents to Markdown,<br/>Edit &amp; Sign PDFs, and OCR Scans</p>
         </header>
 
-        <!-- ====== Upload card ====== -->
-        <section class="card" id="upload-card">
-            <form id="upload-form" enctype="multipart/form-data">
-                <!-- Drop zone -->
-                <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drag and drop a file or click to browse">
-                    <div class="dropzone__icon" id="dropzone-icon">
-                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </div>
-                    <p class="dropzone__text">Drag &amp; Drop your file here</p>
-                    <p class="dropzone__hint">or click to browse</p>
-                    <input type="file" id="file-input" name="file" class="sr-only" />
-                </div>
+        <!-- ====== Tab bar ====== -->
+        <nav class="tabs" role="tablist" aria-label="Tools">
+            <button class="tab-btn tab-btn--active" role="tab" aria-selected="true" data-tab="convert" id="tabbtn-convert">
+                Convert to Markdown
+            </button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-tab="editor" id="tabbtn-editor">
+                PDF Editor
+            </button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-tab="ocr" id="tabbtn-ocr">
+                OCR Scanner
+            </button>
+        </nav>
 
-                <!-- File info (hidden until a file is selected) -->
-                <div class="file-info" id="file-info" hidden>
-                    <div class="file-info__icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                            <polyline points="13 2 13 9 20 9"/>
-                        </svg>
+        <!-- ================================================================
+             TAB 1 — Convert to Markdown (original feature)
+             ================================================================ -->
+        <section class="tab-panel tab-panel--active" id="tab-convert" role="tabpanel" aria-labelledby="tabbtn-convert">
+            <!-- ====== Upload card ====== -->
+            <section class="card" id="upload-card">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <!-- Drop zone -->
+                    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drag and drop a file or click to browse">
+                        <div class="dropzone__icon" id="dropzone-icon">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <p class="dropzone__text">Drag &amp; Drop your file here</p>
+                        <p class="dropzone__hint">or click to browse</p>
+                        <input type="file" id="file-input" name="file" class="sr-only" />
                     </div>
-                    <div class="file-info__details">
-                        <span class="file-info__name" id="file-name"></span>
-                        <span class="file-info__size" id="file-size"></span>
+
+                    <!-- File info (hidden until a file is selected) -->
+                    <div class="file-info" id="file-info" hidden>
+                        <div class="file-info__icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                <polyline points="13 2 13 9 20 9"/>
+                            </svg>
+                        </div>
+                        <div class="file-info__details">
+                            <span class="file-info__name" id="file-name"></span>
+                            <span class="file-info__size" id="file-size"></span>
+                        </div>
+                        <button type="button" class="file-info__remove" id="file-remove" aria-label="Remove file">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
                     </div>
-                    <button type="button" class="file-info__remove" id="file-remove" aria-label="Remove file">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"/>
-                            <line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
+
+                    <!-- Supported formats -->
+                    <div class="formats">
+                        <span class="formats__badge">PDF</span>
+                        <span class="formats__badge">DOCX</span>
+                        <span class="formats__badge">PPTX</span>
+                        <span class="formats__badge">XLSX</span>
+                        <span class="formats__badge">HTML</span>
+                        <span class="formats__badge">CSV</span>
+                        <span class="formats__badge">JSON</span>
+                        <span class="formats__badge">Images</span>
+                    </div>
+
+                    <!-- Convert button -->
+                    <button type="submit" class="btn btn--primary" id="convert-btn" disabled>
+                        <span class="btn__text">Convert &amp; Download</span>
+                        <span class="btn__spinner" aria-hidden="true"></span>
                     </button>
-                </div>
+                </form>
+            </section>
 
-                <!-- Supported formats -->
-                <div class="formats">
-                    <span class="formats__badge">PDF</span>
-                    <span class="formats__badge">DOCX</span>
-                    <span class="formats__badge">PPTX</span>
-                    <span class="formats__badge">XLSX</span>
-                    <span class="formats__badge">HTML</span>
-                    <span class="formats__badge">CSV</span>
-                    <span class="formats__badge">JSON</span>
-                    <span class="formats__badge">Images</span>
+            <!-- ====== Features ====== -->
+            <section class="features" id="features">
+                <div class="feature">
+                    <div class="feature__icon feature__icon--speed">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature__title">Lightning Fast</h3>
+                    <p class="feature__desc">Convert documents in milliseconds, not minutes.</p>
                 </div>
-
-                <!-- Convert button -->
-                <button type="submit" class="btn btn--primary" id="convert-btn" disabled>
-                    <span class="btn__text">Convert &amp; Download</span>
-                    <span class="btn__spinner" aria-hidden="true"></span>
-                </button>
-            </form>
+                <div class="feature">
+                    <div class="feature__icon feature__icon--secure">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature__title">Secure</h3>
+                    <p class="feature__desc">Files are processed locally and never stored.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature__icon feature__icon--accurate">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature__title">Accurate</h3>
+                    <p class="feature__desc">Preserves structure, tables, and formatting.</p>
+                </div>
+            </section>
         </section>
 
-        <!-- ====== Features ====== -->
-        <section class="features" id="features">
-            <div class="feature">
-                <div class="feature__icon feature__icon--speed">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
+        <!-- ================================================================
+             TAB 2 — PDF Editor (100% in-browser: PDF.js + pdf-lib)
+             ================================================================ -->
+        <section class="tab-panel" id="tab-editor" role="tabpanel" aria-labelledby="tabbtn-editor" hidden>
+            <section class="card">
+                <!-- Editor drop zone -->
+                <div class="dropzone" id="editor-dropzone" tabindex="0" role="button" aria-label="Drag and drop a PDF or click to browse">
+                    <div class="dropzone__icon">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                        </svg>
+                    </div>
+                    <p class="dropzone__text">Drop a PDF here to edit &amp; sign</p>
+                    <p class="dropzone__hint">or click to browse — everything happens in your browser</p>
+                    <input type="file" id="editor-file-input" accept=".pdf,application/pdf" class="sr-only" />
                 </div>
-                <h3 class="feature__title">Lightning Fast</h3>
-                <p class="feature__desc">Convert documents in milliseconds, not minutes.</p>
-            </div>
-            <div class="feature">
-                <div class="feature__icon feature__icon--secure">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
+                <p class="editor-note">
+                    Heads-up: PDFs don't allow true in-place text editing. Use <strong>Whiteout</strong> to cover
+                    old text, then <strong>Add Text</strong> to type the replacement on top.
+                </p>
+            </section>
+
+            <!-- Toolbar (appears once a PDF is loaded) -->
+            <section class="card editor-toolbar" id="editor-toolbar" hidden>
+                <div class="editor-toolbar__group" role="group" aria-label="Edit modes">
+                    <button type="button" class="tool-btn" id="tool-text" data-mode="text" title="Click on a page to add text">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                        Add Text
+                    </button>
+                    <button type="button" class="tool-btn" id="tool-whiteout" data-mode="whiteout" title="Drag on a page to cover content with white">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                        Whiteout
+                    </button>
+                    <button type="button" class="tool-btn" id="tool-signature" data-mode="signature" title="Draw a signature, then click on a page to place it">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                        Signature
+                    </button>
                 </div>
-                <h3 class="feature__title">Secure</h3>
-                <p class="feature__desc">Files are processed locally and never stored.</p>
-            </div>
-            <div class="feature">
-                <div class="feature__icon feature__icon--accurate">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                <div class="editor-toolbar__group">
+                    <label class="tool-label" for="tool-fontsize">Font size
+                        <input type="number" id="tool-fontsize" min="8" max="72" step="1" value="16" />
+                    </label>
+                    <button type="button" class="tool-btn" id="tool-undo" title="Remove the last edit">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Undo
+                    </button>
+                    <button type="button" class="tool-btn" id="tool-close" title="Close this PDF">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Close
+                    </button>
                 </div>
-                <h3 class="feature__title">Accurate</h3>
-                <p class="feature__desc">Preserves structure, tables, and formatting.</p>
-            </div>
+                <button type="button" class="btn btn--primary" id="editor-download">
+                    <span class="btn__text">Download edited PDF</span>
+                    <span class="btn__spinner" aria-hidden="true"></span>
+                </button>
+            </section>
+
+            <!-- Rendered PDF pages -->
+            <div id="editor-pages" class="editor-pages"></div>
+        </section>
+
+        <!-- ================================================================
+             TAB 3 — OCR Scanner (server-side Tesseract)
+             ================================================================ -->
+        <section class="tab-panel" id="tab-ocr" role="tabpanel" aria-labelledby="tabbtn-ocr" hidden>
+            <section class="card">
+                <form id="ocr-form">
+                    <div class="dropzone" id="ocr-dropzone" tabindex="0" role="button" aria-label="Drag and drop a scanned PDF or click to browse">
+                        <div class="dropzone__icon">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                                <line x1="7" y1="12" x2="17" y2="12"/>
+                            </svg>
+                        </div>
+                        <p class="dropzone__text">Drop a scanned PDF here</p>
+                        <p class="dropzone__hint">up to 20 MB and 20 pages — text is extracted with Tesseract OCR</p>
+                        <input type="file" id="ocr-file-input" accept=".pdf,application/pdf" class="sr-only" />
+                    </div>
+
+                    <div class="file-info" id="ocr-file-info" hidden>
+                        <div class="file-info__icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                <polyline points="13 2 13 9 20 9"/>
+                            </svg>
+                        </div>
+                        <div class="file-info__details">
+                            <span class="file-info__name" id="ocr-file-name"></span>
+                            <span class="file-info__size" id="ocr-file-size"></span>
+                        </div>
+                        <button type="button" class="file-info__remove" id="ocr-file-remove" aria-label="Remove file">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary" id="ocr-btn" disabled>
+                        <span class="btn__text">Extract Text (OCR)</span>
+                        <span class="btn__spinner" aria-hidden="true"></span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- OCR result -->
+            <section class="card ocr-result" id="ocr-result" hidden>
+                <div class="ocr-result__header">
+                    <h3 class="ocr-result__title">Extracted text</h3>
+                    <div class="ocr-result__actions">
+                        <button type="button" class="tool-btn" id="ocr-copy">Copy</button>
+                        <button type="button" class="tool-btn" id="ocr-download">Download .md</button>
+                    </div>
+                </div>
+                <pre id="ocr-text" class="ocr-result__text"></pre>
+            </section>
         </section>
 
         <!-- ====== Footer ====== -->
         <footer class="footer">
-            <p>Powered by <a href="https://github.com/microsoft/markitdown" target="_blank" rel="noopener">Microsoft MarkItDown</a></p>
+            <p>Powered by <a href="https://github.com/microsoft/markitdown" target="_blank" rel="noopener">Microsoft MarkItDown</a>,
+               <a href="https://pdf-lib.js.org" target="_blank" rel="noopener">pdf-lib</a> &amp;
+               <a href="https://github.com/tesseract-ocr/tesseract" target="_blank" rel="noopener">Tesseract OCR</a></p>
         </footer>
     </main>
+
+    <!-- ====== Signature modal ====== -->
+    <div class="modal" id="sig-modal" hidden>
+        <div class="modal__backdrop" id="sig-backdrop"></div>
+        <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="sig-title">
+            <h3 class="modal__title" id="sig-title">Draw your signature</h3>
+            <canvas id="sig-canvas" class="sig-canvas" width="460" height="200"></canvas>
+            <div class="modal__actions">
+                <button type="button" class="tool-btn" id="sig-clear">Clear</button>
+                <button type="button" class="tool-btn" id="sig-cancel">Cancel</button>
+                <button type="button" class="btn btn--primary btn--small" id="sig-use">Use signature</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ====== Toast container ====== -->
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
+    <!-- Vendored libraries (no CDN at runtime) -->
+    <script src="/static/vendor/pdfjs/pdf.min.js"></script>
+    <script src="/static/vendor/pdf-lib.min.js"></script>
+    <script src="/static/vendor/signature_pad.umd.min.js"></script>
+
+    <!-- App modules -->
+    <script src="/static/js/tabs.js"></script>
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/pdf-editor.js"></script>
+    <script src="/static/js/ocr.js"></script>
 </body>
 </html>

@@ -65,6 +65,10 @@
         }, 4000);
     }
 
+    // Shared with the PDF editor and OCR modules
+    window.showToast = showToast;
+    window.formatSize = formatSize;
+
     // ----- File selection ----------------------------------------------------
 
     function selectFile(file) {

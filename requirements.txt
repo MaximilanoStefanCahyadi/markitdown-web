@@ -1,3 +1,8 @@
 fastapi[standard]
 markitdown[all]
 python-multipart
+
+# OCR stack (the Tesseract binary itself is installed by the Dockerfile)
+PyMuPDF==1.26.3
+pytesseract==0.3.13
+Pillow==11.3.0

@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: markitdown-toolbox
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true
